@@ -1,6 +1,6 @@
 # lyricist · 华语词人引擎
 
-> 一个人的方文山，变成九个人的作词天团。
+> 写歌词的 Claude Code Skill：你说一句主题和感觉，它自动从方文山、林夕、李宗盛等九位词人中挑出最对的那一位，用他（她）的意象、句式、韵脚来写。
 
 [![Skill](https://img.shields.io/badge/Claude%20Code-Skill-blueviolet)](https://claude.com/claude-code) [![Lyricists](https://img.shields.io/badge/词人-9位-critical)]() [![Verified](https://img.shields.io/badge/金句-联网验证-success)]()
 
@@ -53,7 +53,7 @@ Suno风格标签：mandopop ballad, emotional, piano, strings, female vocals
 | 作品 | 词人 | 触发方式 |
 |------|------|---------|
 | 《路过就够》 | 林夕 · 禅意放下 | 主题 + 倾向（失恋要释然） |
-| 《秋霜染砚》 | 方文山 · 中国风 | 主题 + 风格（旧版文山 skill 时期的实际产出，新引擎完整继承） |
+| 《秋霜染砚》 | 方文山 · 中国风 | 主题 + 风格（秋夜思念 / 中国风） |
 | 《同学会》 | 李宗盛 · 人生回望 | 主题 + 人生阶段（同学会 / 中年） |
 
 三首放在一起能直观感受「匹配词人」到底改变了什么：林夕的哲学释然、方文山的古典意象、李宗盛的零修辞唠嗑——同一个人（AI）写的，三种完全不同的质地。
