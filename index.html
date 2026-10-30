@@ -92,6 +92,10 @@ h2{font-family:var(--serif);font-size:clamp(26px,4vw,36px);letter-spacing:.08em;
 .demo .u{color:#9fd0ae}
 .demo .a{color:#f0c987}
 .demo .dim{color:#8a8272;font-size:12.5px;margin-top:6px}
+.tabs{display:flex;gap:10px;margin-top:28px;flex-wrap:wrap}
+.tab{background:var(--card);border:1px solid var(--line);color:var(--ink-soft);padding:9px 20px;border-radius:999px;font-size:14px;cursor:pointer;letter-spacing:.04em;transition:.2s;font-family:var(--sans)}
+.tab:hover{border-color:var(--gold);color:var(--ink)}
+.tab.active{background:var(--cinnabar);border-color:var(--cinnabar);color:#fff}
 
 /* ---------- 同题对照 ---------- */
 #contrast{background:var(--paper-deep);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
@@ -206,12 +210,8 @@ footer a{color:var(--cinnabar);text-decoration:none}
         <p>完整歌词（主副歌桥段结构）+ 英文风格标签 + BPM 建议 + 创作说明。交给 suno 流程直接生成 MP3。</p>
       </div>
     </div>
-    <div class="demo">
-      <div class="u">你：写一首失恋的歌词，要那种看开了、放下了的感觉</div>
-      <div class="a">词人引擎：命中 林夕 · 禅意放下（释然向失恋是林夕的招牌领域）</div>
-      <div class="a">《路过就够》 —— 「谁能把风 收进袖口 / 谁能要彩虹 为谁停留 / 你从我的雨季 路过之后 / 天空放晴 就已经足够」</div>
-      <div class="dim">Suno风格标签：mandopop ballad, emotional, piano, strings, female vocals · 建议 BPM 68</div>
-    </div>
+    <div class="tabs" id="tabs"></div>
+    <div class="demo" id="demo"></div>
   </div>
 </section>
 
@@ -399,6 +399,41 @@ document.getElementById('copybtn').onclick=function(){
   const t=document.getElementById('codebox').innerText.replace('复制\n','');
   navigator.clipboard.writeText(t.trim()).then(()=>{this.textContent='已复制';setTimeout(()=>this.textContent='复制',1600)});
 };
+
+/* ---------- 三个真实案例 ---------- */
+const CASES=[
+ {tab:"林夕 · 路过就够",trigger:"给主题 + 倾向",input:"写一首失恋的歌词，要那种看开了、放下了的感觉",
+  match:"词人引擎：命中 林夕 · 禅意放下（释然向失恋是林夕的招牌领域）",
+  lines:"《路过就够》<br>谁能把风 收进袖口<br>谁能要彩虹 为谁停留<br>你从我的雨季 路过之后<br>天空放晴 就已经足够",
+  suno:"mandopop ballad, emotional, piano, strings, female vocals",bpm:"68"},
+ {tab:"方文山 · 秋霜染砚",trigger:"给主题 + 风格",input:"写一首中国风的词，主题是秋夜思念",
+  match:"词人引擎：命中 方文山 · 中国风 × 伤感情歌（古典凄美）",
+  lines:"《秋霜染砚》<br>秋霜染了砚 我却染了念<br>在长安城外 等一场不见<br>月色酿成酒 一壶不够暖<br>你走后 连书信都搁了半",
+  suno:"chinese classical, gufeng, sad romance, ballad, female vocals",bpm:"65"},
+ {tab:"李宗盛 · 同学会",trigger:"给主题 + 人生阶段",input:"写一首同学会的歌词，人到中年的那种感觉",
+  match:"词人引擎：命中 李宗盛 · 人生回望（中年视角 + 大白话唠嗑体）",
+  lines:"《同学会》<br>我们都活成 当初想不到的模样<br>有人当了官 有人还在流浪<br>干了这杯 别问值不值得<br>二十岁欠下的酒 四十岁补上",
+  suno:"mandopop folk ballad, acoustic guitar, storytelling, warm male vocals",bpm:"72"}
+];
+const tabsEl=document.getElementById('tabs'),demoEl=document.getElementById('demo');
+CASES.forEach((c,i)=>{
+  const b=document.createElement('button');
+  b.className='tab'+(i===0?' active':'');
+  b.textContent=c.tab;
+  b.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');renderCase(i);
+  };
+  tabsEl.appendChild(b);
+});
+function renderCase(i){const c=CASES[i];
+  demoEl.innerHTML='<div class="dim" style="margin:0 0 10px">触发方式 · '+c.trigger+'</div>'+
+  '<div class="u">你：'+c.input+'</div>'+
+  '<div class="a">'+c.match+'</div>'+
+  '<div class="a" style="font-family:var(--serif);line-height:2.15;margin-top:8px">'+c.lines+'</div>'+
+  '<div class="dim">Suno风格标签：'+c.suno+' · 建议 BPM '+c.bpm+' · 完整歌词见仓库 examples/ 目录</div>';
+}
+renderCase(0);
 </script>
 </body>
 </html>
