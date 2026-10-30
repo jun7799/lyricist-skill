@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>词人引擎 lyricist · 九位华语词人的 Claude Code Skill</title>
+<meta name="description" content="lyricist：给 Claude Code 的华语词人风格创作引擎。说一个主题，自动匹配林夕、方文山、李宗盛等九位词人中的一位，按其风格写词，直出 Suno 素材。">
+<style>
+:root{
+  --paper:#f7f3ea; --paper-deep:#efe8d8; --card:#fdfbf5;
+  --ink:#1c1a17; --ink-soft:#5c564c; --ink-faint:#8a8272;
+  --cinnabar:#a63a2b; --cinnabar-deep:#8c2f22;
+  --gold:#8a6d3b; --line:#ddd4c0;
+  --serif:'Noto Serif SC','Source Han Serif SC','Source Han Serif CN',Georgia,'SimSun',serif;
+  --sans:'PingFang SC','Microsoft YaHei','Segoe UI',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.7;-webkit-font-smoothing:antialiased}
+::selection{background:var(--cinnabar);color:#fff}
+
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+
+/* ---------- 顶部导航 ---------- */
+nav{position:sticky;top:0;z-index:50;background:rgba(247,243,234,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.nav-in{display:flex;align-items:center;justify-content:space-between;height:60px}
+.brand{font-family:var(--serif);font-weight:700;font-size:19px;letter-spacing:.12em;display:flex;align-items:center;gap:10px}
+.seal{width:30px;height:30px;background:var(--cinnabar);color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-family:var(--serif);letter-spacing:0}
+nav a{color:var(--ink-soft);text-decoration:none;font-size:14px;margin-left:22px;letter-spacing:.05em}
+nav a:hover{color:var(--cinnabar)}
+
+/* ---------- Hero ---------- */
+header{padding:84px 0 64px;position:relative;overflow:hidden}
+header::before{content:'詞';position:absolute;right:-40px;top:-60px;font-family:var(--serif);font-size:380px;color:var(--ink);opacity:.045;line-height:1;pointer-events:none}
+.eyebrow{color:var(--cinnabar);font-size:14px;letter-spacing:.35em;margin-bottom:18px;font-weight:600}
+h1{font-family:var(--serif);font-size:clamp(38px,6vw,62px);font-weight:900;letter-spacing:.06em;line-height:1.25}
+h1 em{font-style:normal;color:var(--cinnabar)}
+.sub{font-family:var(--serif);font-size:clamp(17px,2.4vw,21px);color:var(--ink-soft);margin:22px 0 10px;letter-spacing:.04em}
+.desc{max-width:640px;color:var(--ink-soft);font-size:15.5px;margin-top:14px}
+.cta{margin-top:36px;display:flex;gap:14px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:6px;font-size:15px;text-decoration:none;letter-spacing:.06em;transition:.2s;border:1px solid transparent}
+.btn-main{background:var(--cinnabar);color:#fff}
+.btn-main:hover{background:var(--cinnabar-deep)}
+.btn-ghost{border-color:var(--ink);color:var(--ink)}
+.btn-ghost:hover{background:var(--ink);color:var(--paper)}
+.meta-row{margin-top:44px;display:flex;gap:34px;flex-wrap:wrap;color:var(--ink-faint);font-size:13.5px}
+.meta-row b{color:var(--ink);font-family:var(--serif);font-size:20px;display:block;font-weight:700}
+.meta-row span{letter-spacing:.05em}
+
+/* ---------- 通用节 ---------- */
+section{padding:72px 0}
+.sec-head{margin-bottom:40px}
+.sec-no{font-family:var(--serif);color:var(--cinnabar);font-size:14px;letter-spacing:.3em;margin-bottom:8px}
+h2{font-family:var(--serif);font-size:clamp(26px,4vw,36px);letter-spacing:.08em;font-weight:800}
+.sec-sub{color:var(--ink-soft);margin-top:10px;font-size:15px;max-width:640px}
+
+/* ---------- 词人九宫格 ---------- */
+#hall{background:var(--paper-deep);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:26px 22px 22px;cursor:pointer;position:relative;transition:.22s;overflow:hidden}
+.card:hover{transform:translateY(-4px);box-shadow:0 14px 30px rgba(60,45,20,.12);border-color:var(--gold)}
+.card .name{font-family:var(--serif);font-size:26px;font-weight:800;letter-spacing:.1em;display:flex;align-items:baseline;gap:10px}
+.card .en{font-size:11px;color:var(--ink-faint);letter-spacing:.08em;font-family:var(--sans)}
+.card .tag{color:var(--cinnabar);font-size:14px;margin:8px 0 12px;font-weight:600;letter-spacing:.04em}
+.card .works{color:var(--ink-soft);font-size:13px;line-height:1.8}
+.card .mark{position:absolute;right:14px;top:16px;font-family:var(--serif);color:var(--ink);opacity:.08;font-size:44px;pointer-events:none}
+.card .more{margin-top:14px;font-size:12.5px;color:var(--gold);letter-spacing:.1em}
+.vname{writing-mode:vertical-rl;font-family:var(--serif);position:absolute;right:18px;top:18px;font-size:15px;letter-spacing:.35em;color:var(--ink-faint);opacity:.55;pointer-events:none}
+
+/* ---------- 模态 ---------- */
+.overlay{position:fixed;inset:0;background:rgba(28,26,23,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.overlay.open{display:flex}
+.modal{background:var(--card);border-radius:12px;max-width:600px;width:100%;max-height:86vh;overflow-y:auto;padding:36px 34px 30px;position:relative;border-top:4px solid var(--cinnabar)}
+.modal h3{font-family:var(--serif);font-size:30px;letter-spacing:.1em;font-weight:800}
+.modal .m-tag{color:var(--cinnabar);font-weight:600;margin:6px 0 4px}
+.modal .m-works{color:var(--ink-faint);font-size:13px;margin-bottom:18px}
+.modal dl{font-size:14.5px}
+.modal dt{font-family:var(--serif);font-weight:700;margin-top:16px;letter-spacing:.08em;color:var(--ink)}
+.modal dd{color:var(--ink-soft);margin-top:4px}
+.quote{border-left:3px solid var(--cinnabar);padding:8px 0 8px 16px;margin-top:8px;font-family:var(--serif);font-size:16px;line-height:1.9;color:var(--ink)}
+.quote small{display:block;font-family:var(--sans);font-size:12px;color:var(--ink-faint);margin-top:4px}
+.close{position:absolute;right:16px;top:14px;font-size:22px;background:none;border:none;cursor:pointer;color:var(--ink-faint)}
+.close:hover{color:var(--cinnabar)}
+
+/* ---------- 流程 ---------- */
+.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:26px 22px}
+.step .no{font-family:var(--serif);font-size:15px;color:var(--gold);letter-spacing:.2em;margin-bottom:10px}
+.step h4{font-family:var(--serif);font-size:19px;letter-spacing:.06em;margin-bottom:10px}
+.step p{color:var(--ink-soft);font-size:14px}
+.demo{margin-top:26px;background:var(--ink);color:#e8e2d4;border-radius:10px;padding:24px 26px;font-size:14px;line-height:2}
+.demo .u{color:#9fd0ae}
+.demo .a{color:#f0c987}
+.demo .dim{color:#8a8272;font-size:12.5px;margin-top:6px}
+
+/* ---------- 同题对照 ---------- */
+#contrast{background:var(--paper-deep);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.cmp{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.cmp-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:24px}
+.cmp-card .who{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+.cmp-card .who b{font-family:var(--serif);font-size:21px;letter-spacing:.08em}
+.cmp-card .who span{color:var(--cinnabar);font-size:13px;font-weight:600}
+.cmp-card .way{color:var(--ink-faint);font-size:12.5px;letter-spacing:.05em;margin-bottom:12px}
+.cmp-card blockquote{border-left:3px solid var(--gold);padding-left:14px;font-family:var(--serif);font-size:15.5px;line-height:1.9}
+.cmp-card cite{display:block;font-style:normal;font-size:12px;color:var(--ink-faint);margin-top:6px}
+
+/* ---------- 细节 ---------- */
+.feats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.feat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:24px}
+.feat b{font-family:var(--serif);font-size:17px;letter-spacing:.06em;display:block;margin-bottom:8px}
+.feat p{color:var(--ink-soft);font-size:13.5px}
+
+/* ---------- 安装 ---------- */
+.install{background:var(--ink);color:#ece6d8;border-radius:12px;padding:30px 28px}
+.install h3{font-family:var(--serif);letter-spacing:.1em;font-size:20px;margin-bottom:16px;color:#fff}
+.code{position:relative;background:#0e0d0b;border:1px solid #3a362e;border-radius:8px;padding:18px 18px 16px;font-family:Consolas,'Courier New',monospace;font-size:13.5px;line-height:1.9;overflow-x:auto;white-space:pre}
+.code .c{color:#7a7466}
+.code .k{color:#f0c987}
+.copy{position:absolute;right:10px;top:8px;background:#3a362e;border:none;color:#e8e2d4;font-size:12px;padding:5px 12px;border-radius:5px;cursor:pointer;letter-spacing:.05em}
+.copy:hover{background:var(--cinnabar)}
+.note{margin-top:14px;font-size:13px;color:#b5ad99}
+
+/* ---------- footer ---------- */
+footer{padding:44px 0 52px;color:var(--ink-faint);font-size:13px;text-align:center;letter-spacing:.05em}
+footer .f-brand{font-family:var(--serif);color:var(--ink-soft);letter-spacing:.2em;margin-bottom:8px}
+footer a{color:var(--cinnabar);text-decoration:none}
+
+@media (max-width:860px){
+  .grid,.flow,.feats{grid-template-columns:1fr 1fr}
+  .cmp{grid-template-columns:1fr}
+  nav a{margin-left:14px;font-size:13px}
+}
+@media (max-width:560px){
+  .grid,.flow,.feats{grid-template-columns:1fr}
+  header{padding:56px 0 44px}
+  .meta-row{gap:22px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-in">
+    <div class="brand"><span class="seal">詞</span>词人引擎 lyricist</div>
+    <div>
+      <a href="#hall">词人堂</a>
+      <a href="#how">怎么用</a>
+      <a href="#contrast">同题对照</a>
+      <a href="#start">快速开始</a>
+    </div>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">CLAUDE CODE SKILL</div>
+    <h1>一个人的方文山，<br>变成<em>九个人</em>的作词天团</h1>
+    <p class="sub">lyricist —— 会自动选词人的歌词创作引擎</p>
+    <p class="desc">你说一个主题、一点感觉，它在九位华语顶级作词人中挑出最对的那一位，按他（她）的意象、句式、韵脚来写词，最后直出 Suno 风格素材，接着就能生成歌曲。</p>
+    <div class="cta">
+      <a class="btn btn-main" href="https://github.com/jun7799/lyricist-skill" target="_blank">GitHub 仓库</a>
+      <a class="btn btn-ghost" href="#start">安装使用</a>
+    </div>
+    <div class="meta-row">
+      <div><b>9</b><span>位词人风格库</span></div>
+      <div><b>30+</b><span>种子风格流派</span></div>
+      <div><b>18</b><span>首金句联网验证</span></div>
+      <div><b>2</b><span>级智能匹配</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- 词人堂 -->
+<section id="hall">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-no">壹 · 词人堂</div>
+      <h2>九位词人，各管一种心情</h2>
+      <p class="sec-sub">点一张卡片，看看谁的笔最适合你今晚的心情。阵容覆盖：中国风、都市情歌、毒舌暗黑、人生白话、热血摇滚、时代人文、校园民谣、烟火日常、孤勇燃系。</p>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+</section>
+
+<!-- 怎么用 -->
+<section id="how">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-no">贰 · 怎么用</div>
+      <h2>三步出词，两步成歌</h2>
+    </div>
+    <div class="flow">
+      <div class="step">
+        <div class="no">第一步</div>
+        <h4>说主题，给感觉</h4>
+        <p>「写一首失恋的词，要那种看开了的感觉」——主题加倾向就够了。也可以直接点名：「用李宗盛的感觉写」。</p>
+      </div>
+      <div class="step">
+        <div class="no">第二步</div>
+        <h4>自动匹配词人</h4>
+        <p>「看开、放下」命中林夕·禅意放下；拿不准时它会列两三位候选，一句话定位加代表作，选一个就行，只问一次。</p>
+      </div>
+      <div class="step">
+        <div class="no">第三步</div>
+        <h4>出词 + Suno 素材</h4>
+        <p>完整歌词（主副歌桥段结构）+ 英文风格标签 + BPM 建议 + 创作说明。交给 suno 流程直接生成 MP3。</p>
+      </div>
+    </div>
+    <div class="demo">
+      <div class="u">你：写一首失恋的歌词，要那种看开了、放下了的感觉</div>
+      <div class="a">词人引擎：命中 林夕 · 禅意放下（释然向失恋是林夕的招牌领域）</div>
+      <div class="a">《路过就够》 —— 「谁能把风 收进袖口 / 谁能要彩虹 为谁停留 / 你从我的雨季 路过之后 / 天空放晴 就已经足够」</div>
+      <div class="dim">Suno风格标签：mandopop ballad, emotional, piano, strings, female vocals · 建议 BPM 68</div>
+    </div>
+  </div>
+</section>
+
+<!-- 同题对照 -->
+<section id="contrast">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-no">叁 · 灵魂功能</div>
+      <h2>同一个失恋，四种写法</h2>
+      <p class="sec-sub">「作词人风格引擎」最容易做成千人一面。lyricist 给每位词人写了硬性的「区分点」——同样写失去，出口完全不同。</p>
+    </div>
+    <div class="cmp">
+      <div class="cmp-card">
+        <div class="who"><b>林夕</b><span>出口是哲学</span></div>
+        <div class="way">痛过之后的明白 · 体面轻声地放下</div>
+        <blockquote>谁能凭爱意要富士山私有<cite>—— 《富士山下》</cite></blockquote>
+      </div>
+      <div class="cmp-card">
+        <div class="who"><b>黄伟文</b><span>出口是反击</span></div>
+        <div class="way">丑陋的真实 · 戏剧化的不甘</div>
+        <blockquote>你当我是浮夸吧 夸张只因我很怕<cite>—— 《浮夸》</cite></blockquote>
+      </div>
+      <div class="cmp-card">
+        <div class="who"><b>李宗盛</b><span>出口是和解</span></div>
+        <div class="way">中年回望 · 大白话见血 · 认了</div>
+        <blockquote>越过山丘 才发现无人等候<cite>—— 《山丘》</cite></blockquote>
+      </div>
+      <div class="cmp-card">
+        <div class="who"><b>毛不易</b><span>出口是晚安</span></div>
+        <div class="way">烟火白描 · 克制深情 · 往回收</div>
+        <blockquote>月儿明 风儿轻 可是你在敲打我的窗棂<cite>—— 《一荤一素》</cite></blockquote>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 细节 -->
+<section id="detail">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-no">肆 · 下了笨功夫</div>
+      <h2>像不像，是靠细节磨出来的</h2>
+    </div>
+    <div class="feats">
+      <div class="feat">
+        <b>每词人一份风格档案</b>
+        <p>风格画像、子风格流派、核心意象词库、经典句式骨架、韵脚偏好、结构与语言质地——写词前必读，按档案下笔。</p>
+      </div>
+      <div class="feat">
+        <b>金句联网验证过原文</b>
+        <p>18 首代表作金句逐一联网核对，还纠出两处流行误传：《宜静嫁大雄》出自《错错错》而非《干杯》；《野孩子》里并没有「我不介意孤独」。</p>
+      </div>
+      <div class="feat">
+        <b>硬性「区分点」机制</b>
+        <p>每份档案都有「与其他词人的区分点」+ 写完自检清单，防止把林夕写成黄伟文、把所有人写成同一个伤感模板。</p>
+      </div>
+      <div class="feat">
+        <b>两级智能匹配</b>
+        <p>先匹配词人（关键词/情绪/主题三层规则），再匹配子风格（林夕·禅意放下 vs 都市痴缠）。歧义时才询问，只问一次。</p>
+      </div>
+      <div class="feat">
+        <b>直出 Suno 素材</b>
+        <p>每份档案预置该词人适配的英文曲风标签与 BPM 区间，输出文件带标准元信息，可无缝衔接 suno 生成流程。</p>
+      </div>
+      <div class="feat">
+        <b>反 AI 八股条款</b>
+        <p>创作铁律明令禁止「岁月的长河」「时光的画卷」这类空洞套话——每个意象必须具体可感，副歌必须有能单独传播的金句。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 快速开始 -->
+<section id="start">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-no">伍 · 快速开始</div>
+      <h2>三行装进你的 Claude Code</h2>
+    </div>
+    <div class="install">
+      <h3>安装</h3>
+      <div class="code" id="codebox"><button class="copy" id="copybtn">复制</button><span class="c"># 克隆仓库</span>
+git clone https://github.com/jun7799/lyricist-skill.git
+
+<span class="c"># 把整个文件夹放进 Claude Code 的 skills 目录</span>
+<span class="c"># Windows</span>  C:\Users\&lt;你&gt;\.claude\skills\lyricist-skill
+<span class="c"># macOS / Linux</span>  ~/.claude/skills/lyricist-skill</div>
+      <p class="note">装好后在 Claude Code 里说「写首歌词」就会自动触发；也可以点名「用林夕的风格写」「来一首毛不易感觉的歌」。</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="f-brand">词 人 引 擎 · lyricist</div>
+    <div>由「文山 skill」升级而来 · 方文山 / 林夕 / 黄伟文 / 李宗盛 / 阿信 / 罗大佑 / 高晓松 / 毛不易 / 唐恬</div>
+    <div style="margin-top:8px">引用金句仅作风格标注与学习参考 · 产出均为原创 · <a href="https://github.com/jun7799/lyricist-skill" target="_blank">GitHub</a> · 公众号：AI混子-俊</div>
+  </div>
+</footer>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal">
+    <button class="close" id="closebtn">✕</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const L=[
+{id:0,name:"方文山",en:"Vincent Fang",tag:"中国风画面感",works:"青花瓷 · 东风破 · 烟花易冷",
+ when:"要古风、要画面、要中国美学，或者武侠、异域题材",
+ how:"画面感先行：不说『我很想你』，说『雨纷纷 旧故里草木深』。意象对仗、时空穿越、通感修辞是他的七大技法底座。",
+ quote:"天青色等烟雨 而我在等你",from:"《青花瓷》",
+ style:"十大风格：中国风 / 暗黑哥特 / 甜蜜情歌 / 伤感情歌 / 武侠 / 校园 / 说唱 / 励志 / 影视 / 异域"},
+{id:1,name:"林 夕",en:"Lin Xi",tag:"都市细腻 · 禅意放下",works:"红豆 · 富士山下 · 百年孤寂",
+ when:"失恋要释然、爱而不得、深夜自省——都市人的情感他最懂",
+ how:"把情感真理写成悖论（『要拥有必先懂失去怎接受』），把美好写成不可私有（『谁能凭爱意要富士山私有』），痛到极点依然轻声细语。",
+ quote:"原来我非不快乐 只我一人未发觉",from:"《再见二丁目》",
+ style:"三种子风格：禅意放下 / 都市痴缠 / 叩问自省"},
+{id:2,name:"黄伟文",en:"Wyman Wong",tag:"毒舌戏剧化 · 暗黑异色",works:"浮夸 · 葡萄成熟时 · 野孩子",
+ when:"不甘心、想反击、写小人物、要黑色幽默或女性向的骄傲",
+ how:"词像一出独幕剧：『那年十八 母校舞会 站着如喽啰』。敢把自卑嫉妒写到极致，最后给一个苦涩的自洽。",
+ quote:"你当我是浮夸吧 夸张只因我很怕",from:"《浮夸》",
+ style:"三种子风格：毒舌自嘲 / 哲理修炼 / 女性心史"},
+{id:3,name:"李宗盛",en:"Jonathan Lee",tag:"中年叙事 · 大白话见血",works:"山丘 · 凡人歌 · 爱的代价",
+ when:"人生回望、中年况味、多年后复盘一段感情",
+ how:"零修辞，把话说到位：『想得却不可得 你奈人生何』。杀伤力来自时间感——一句词压半生。",
+ quote:"越过山丘 才发现无人等候",from:"《山丘》· 金曲奖最佳作词",
+ style:"三种子风格：人生回望 / 凡人白描 / 情路沧桑"},
+{id:4,name:"阿 信",en:"Ashin · Mayday",tag:"青春热血 · 摇滚叙事",works:"倔强 · 干杯 · 温柔",
+ when:"热血励志、毕业告别、青春遗憾——体育场大合唱体质",
+ how:"招牌是逆转拉起：『逆风的方向 更适合飞翔』。前半句按到低谷，后半句一把拽起来。",
+ quote:"我不怕千万人阻挡 只怕自己投降",from:"《倔强》",
+ style:"三种子风格：热血宣言 / 青春告别 / 温柔叙事"},
+{id:5,name:"罗大佑",en:"Lo Ta-yu",tag:"时代人文 · 家国乡愁",works:"恋曲1990 · 东方之珠 · 童年",
+ when:"故乡变迁、时代纪念、光阴岁月的宏大叙事",
+ how:"白话的皮，文言的骨：『轻飘飘的旧时光就这么溜走 转头回去看看时已匆匆数年』。个人的事永远连着时代。",
+ quote:"台北不是我的家 我的家乡没有霓虹灯",from:"《鹿港小镇》",
+ style:"三种子风格：时代人文 / 恋曲诗 / 童年光阴"},
+{id:6,name:"高晓松",en:"Gao Xiaosong",tag:"校园民谣 · 白衣飘飘",works:"同桌的你 · 恋恋风尘",
+ when:"校园怀旧、致青春、流浪远方的诗意",
+ how:"连环叩问是他的仪式：『谁娶了多愁善感的你 谁看了你的日记』。意象干净透明——白雪、山岗、白衣、月光。",
+ quote:"忧伤 开满山岗 等青春散场",from:"《恋恋风尘》",
+ style:"三种子风格：校园祭奠 / 流浪诗意 / 白衣挽歌"},
+{id:7,name:"毛不易",en:"Mao Buyi",tag:"平凡烟火 · 白描克制",works:"消愁 · 一荤一素 · 像我这样的人",
+ when:"生活日常、亲情思念、平凡人的深夜自白",
+ how:"深情全藏在物件里：写母亲去世，通篇没有『想』字，只说『月儿明 风儿轻 可是你在敲打我的窗棂』。最深情处音量最小。",
+ quote:"一杯敬朝阳 一杯敬月光 唤醒我的向往 温柔了寒窗",from:"《消愁》",
+ style:"两种子风格：烟火白描 / 自嘲敬酒"},
+{id:8,name:"唐 恬",en:"Tang Tian",tag:"孤勇燃系 · 无名者立像",works:"孤勇者 · 如愿 · 人世间",
+ when:"逆袭坚守、致敬平凡英雄、燃且暖的题材",
+ how:"镜头永远对准不在光里的人：『谁说站在光里的才算英雄』。燃而不喊口号，暖而不洒鸡汤。",
+ quote:"去吗 配吗 这褴褛的披风 战吗 战啊 以最卑微的梦",from:"《孤勇者》",
+ style:"两种子风格：孤勇燃系 / 致敬传承"}
+];
+
+const grid=document.getElementById('grid');
+L.forEach(x=>{
+  const d=document.createElement('div');
+  d.className='card';
+  d.innerHTML='<span class="mark">'+x.name.trim()+'</span>'+
+    '<div class="name">'+x.name+'<span class="en">'+x.en+'</span></div>'+
+    '<div class="tag">'+x.tag+'</div>'+
+    '<div class="works">'+x.works+'</div>'+
+    '<div class="more">翻开这份档案 →</div>';
+  d.onclick=()=>openM(x.id);
+  grid.appendChild(d);
+});
+const ov=document.getElementById('overlay'),mb=document.getElementById('modal-body');
+function openM(i){const x=L[i];
+  mb.innerHTML='<h3>'+x.name+'<span style="font-size:13px;color:#8a8272;font-family:sans-serif;margin-left:10px">'+x.en+'</span></h3>'+
+  '<div class="m-tag">'+x.tag+'</div><div class="m-works">代表作：'+x.works+'</div>'+
+  '<dl><dt>什么时候找他</dt><dd>'+x.when+'</dd>'+
+  '<dt>他怎么写</dt><dd>'+x.how+'</dd>'+
+  '<dt>风格流派</dt><dd>'+x.style+'</dd>'+
+  '<dt>验证金句</dt></dl>'+
+  '<div class="quote">『'+x.quote+'』<small>'+x.from+'</small></div>';
+  ov.classList.add('open');document.body.style.overflow='hidden';
+}
+document.getElementById('closebtn').onclick=closeM;
+ov.onclick=e=>{if(e.target===ov)closeM()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM()});
+function closeM(){ov.classList.remove('open');document.body.style.overflow=''}
+document.getElementById('copybtn').onclick=function(){
+  const t=document.getElementById('codebox').innerText.replace('复制\n','');
+  navigator.clipboard.writeText(t.trim()).then(()=>{this.textContent='已复制';setTimeout(()=>this.textContent='复制',1600)});
+};
+</script>
+</body>
+</html>
