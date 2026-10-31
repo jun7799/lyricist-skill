@@ -1,5 +1,7 @@
 # lyricist · 华语词人引擎
 
+<p align="center"><img src="assets/logo.png" width="160" alt="lyricist logo"></p>
+
 > 写歌词的 Claude Code Skill：你说一句主题和感觉，它自动从方文山、林夕、李宗盛等九位词人中挑出最对的那一位，用他（她）的意象、句式、韵脚来写。
 
 [![Skill](https://img.shields.io/badge/Claude%20Code-Skill-blueviolet)](https://claude.com/claude-code) [![Lyricists](https://img.shields.io/badge/词人-9位-critical)]() [![Verified](https://img.shields.io/badge/金句-联网验证-success)]()
@@ -64,7 +66,7 @@ Suno风格标签：mandopop ballad, emotional, piano, strings, female vocals
 你的主题 + 倾向
    ↓ 两级匹配（关键词层 → 情绪层 → 主题层；歧义时询问一次）
 词人 + 子风格
-   ↓ 加载该词人风格档案（references/词人.md）
+   ↓ 加载该词人的风格档案（references 目录下对应词人的文件）
 按档案创作：意象词库选意象 → 句式骨架搭建 → 韵脚偏好落韵
    ↓ 风格校验（对照"区分点"清单，防止写成通用歌词）
 完整歌词 + Suno素材 + 创作说明
