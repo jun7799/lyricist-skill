@@ -1,5 +1,10 @@
 ---
 name: lyricist
+version: 1.0.0
+display_name: 华语词人引擎
+display_name_en: Chinese Lyricist Engine
+description_zh: 说一句主题和感觉，自动从九位华语顶级词人中匹配最合适的一位，按其意象、句式、韵脚创作歌词，直出 Suno 风格素材。
+description_en: A Claude Code skill that matches your theme to one of nine top Chinese lyricists (Vincent Fang, Lin Xi, Jonathan Lee and more) and writes lyrics in their signature style, with Suno-ready tags.
 description: |
   华语词人风格创作引擎（多作词人版）。根据用户给定的主题、情绪或倾向，
   自动匹配 9 位华语顶级作词人中的一位，按其标志性风格创作歌词，
