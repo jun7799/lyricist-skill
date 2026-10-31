@@ -1,6 +1,6 @@
 ---
 name: lyricist
-version: 1.0.0
+version: 1.0.1
 display_name: 华语词人引擎
 display_name_en: Chinese Lyricist Engine
 description_zh: 说一句主题和感觉，自动从九位华语顶级词人中匹配最合适的一位，按其意象、句式、韵脚创作歌词，直出 Suno 风格素材。
